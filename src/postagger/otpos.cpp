@@ -3,6 +3,7 @@
 #include "boost/program_options.hpp"
 #include "utils/logging.hpp"
 #include "postagger/postagger_frontend.h"
+#include "postagger/options.h"
 
 #define DESCRIPTION "Part of Speech Tagging"
 #define EXECUTABLE "otpos"
@@ -12,7 +13,11 @@ using boost::program_options::value;
 using boost::program_options::variables_map;
 using boost::program_options::store;
 using boost::program_options::parse_command_line;
+using boost::program_options::notify;
 using ltp::postagger::PostaggerFrontend;
+using ltp::postagger::TrainOptions;
+using ltp::postagger::TestOptions;
+using ltp::postagger::DumpOptions;
 
 int learn(int argc, const char* argv[]) {
   std::string usage = EXECUTABLE "(learn) in LTP " LTP_VERSION " - (C) 2012-2015 HIT-SCIR\n";
@@ -20,61 +25,48 @@ int learn(int argc, const char* argv[]) {
   usage += "usage: ./" EXECUTABLE " learn <options>\n\n";
   usage += "options:";
 
-  options_description optparser = options_description(usage);
+  TrainOptions opt;
+  options_description optparser(usage);
   optparser.add_options()
-    ("model", value<std::string>(),
+    ("model", value<std::string>(&opt.model_name)->required(),
      "The prefix of the model file, model will be stored as model.$iter.")
-    ("reference", value<std::string>(), "The path to the reference file.")
-    ("development", value<std::string>(), "The path to the development file.")
-    ("algorithm", value<std::string>()->default_value("pa"), "The learning algorithm\n"
+    ("reference", value<std::string>(&opt.train_file)->required(), "The path to the reference file.")
+    ("development", value<std::string>(&opt.holdout_file)->default_value(""), "The path to the development file.")
+    ("algorithm", value<std::string>(&opt.algorithm)->default_value("pa"), "The learning algorithm\n"
                                           " - ap: averaged perceptron\n"
                                           " - pa: passive aggressive [default]")
-    ("max-iter", value<int>()->default_value(10), "The number of iteration [default=10].")
-    ("rare-feature-threshold", value<int>()->default_value(0),
+    ("max-iter", value<size_t>(&opt.max_iter)->default_value(10), "The number of iteration [default=10].")
+    ("rare-feature-threshold", value<size_t>(&opt.rare_feature_threshold)->default_value(0),
      "The threshold for rare feature, used in model truncation. [default=0]")
     ("help,h", "Show help information");
 
   if (argc == 1) { std::cerr << optparser << std::endl; return 1; }
 
   variables_map vm;
-  store(parse_command_line(argc, argv, optparser), vm);
-
-  if (vm.count("help")) { std::cerr << optparser << std::endl; return 0; }
-
-  std::string reference = "";
-  if (!vm.count("reference")) {
-    ERROR_LOG("reference file should be specified [--reference].");
+  try{
+    store(parse_command_line(argc, argv, optparser), vm);
+    if (vm.count("help")) {
+      std::cerr << optparser << std::endl;
+      return 0;
+    }
+    notify(vm);
+  } catch(const boost::program_options::error &e) {
+    std::cerr << optparser << std::endl;
+    std::cerr << e.what() << std::endl;
     return 1;
-  } else {
-    reference = vm["reference"].as<std::string>();
   }
 
-  std::string model_name = "";
-  if (!vm.count("model")) {
-    ERROR_LOG("model prefix should be specified [--model].");
-    return 1;
-  } else {
-    model_name = vm["model"].as<std::string>();
-  }
-
-  std::string development = "";
-  if (!vm.count("development")) {
+  if (opt.holdout_file.empty()) {
     WARNING_LOG("development file is not configed, evaluation will not be performed.");
-  } else {
-    development = vm["development"].as<std::string>(); 
   }
 
-  std::string algorithm = vm["algorithm"].as<std::string>();
-  if (algorithm != "pa" && algorithm != "ap") {
+  if (opt.algorithm != "pa" && opt.algorithm != "ap") {
     WARNING_LOG("algorithm should either be ap or pa, set as default [pa].");
-    algorithm = "pa";
+    opt.algorithm = "pa";
   }
 
-  int max_iter = vm["max-iter"].as<int>();
-  int rare_feature_threshold = vm["rare-feature-threshold"].as<int>();
 
-  PostaggerFrontend frontend(reference, development, model_name,
-      algorithm, max_iter, rare_feature_threshold);
+  PostaggerFrontend frontend(opt);
   frontend.train();
   return 0;
 }
@@ -85,55 +77,36 @@ int test(int argc, const char* argv[]) {
   usage += "usage: ./" EXECUTABLE " test <options>\n\n";
   usage += "options:";
 
-  options_description optparser = options_description(usage);
+  TestOptions opt;
+  options_description optparser(usage);
   optparser.add_options()
-    ("model", value<std::string>(), "The path to the model file.")
-    ("lexicon", value<std::string>(),
+    ("model", value<std::string>(&opt.model_file)->required(), "The path to the model file.")
+    ("lexicon", value<std::string>(&opt.lexicon_file)->default_value(""),
      "The lexicon file, (optional, if configured, constrained decoding will be performed).")
-    ("input", value<std::string>(), "The path to the reference file.")
-    ("evaluate", value<bool>()->default_value(false),
+    ("input", value<std::string>(&opt.test_file), "The path to the reference file.")
+    ("evaluate", value<bool>(&opt.evaluate)->default_value(false),
      "if configured, perform evaluation, input should contain '_' concatenated tag")
-    ("sequence", value<bool>()->default_value(false), "Output the probability of the label sequences")
-    ("marginal", value<bool>()->default_value(false), "Output the marginal probabilities of tags")
+    ("sequence", value<bool>(&opt.sequence_prob)->default_value(false), "Output the probability of the label sequences")
+    ("marginal", value<bool>(&opt.marginal_prob)->default_value(false), "Output the marginal probabilities of tags")
     ("help,h", "Show help information");
 
   if (argc == 1) { std::cerr << optparser << std::endl; return 1; }
 
   variables_map vm;
-  store(parse_command_line(argc, argv, optparser), vm);
-
-  if (vm.count("help")) {
+  try {
+    store(parse_command_line(argc, argv, optparser), vm);
+    if (vm.count("help")) {
+      std::cerr << optparser << std::endl;
+      return 1;
+    }
+    notify(vm);
+  } catch(const boost::program_options::error &e) {
     std::cerr << optparser << std::endl;
+    std::cerr << e.what() << std::endl;
     return 1;
   }
 
-  std::string model_file = "";
-  if (!vm.count("model")) {
-    ERROR_LOG("model prefix should be specified [--model].");
-    return 1;
-  } else {
-    model_file = vm["model"].as<std::string>();
-  }
-
-  std::string input_file = "";
-  if (!vm.count("input")) {
-    ERROR_LOG("input file should be specified [--input].");
-    return 1;
-  } else {
-    input_file = vm["input"].as<std::string>();
-  }
-
-  std::string lexicon_file = "";
-  if (vm.count("lexicon")) { lexicon_file = vm["lexicon"].as<std::string>(); }
-
-  std::string output_file = "";
-  if (vm.count("output")) { output_file = vm["output"].as<std::string>(); }
-
-  bool evaluate = vm["evaluate"].as<bool>();
-  bool sequence_prob = vm["sequence"].as<bool>();
-  bool marginal_prob = vm["marginal"].as<bool>();
-
-  PostaggerFrontend frontend(input_file, model_file, lexicon_file, evaluate, sequence_prob, marginal_prob);
+  PostaggerFrontend frontend(opt);
   frontend.test();
   return 0;
 }
@@ -144,30 +117,30 @@ int dump(int argc, const char* argv[]) {
   usage += "usage: ./" EXECUTABLE " dump <options>\n\n";
   usage += "options:";
 
-  options_description optparser = options_description(usage);
+  DumpOptions opt;
+  options_description optparser(usage);
   optparser.add_options()
-    ("model", value<std::string>(), "The path to the model file.")
+    ("model", value<std::string>(&opt.model_file)->required(), "The path to the model file.")
     ("help,h", "Show help information");
 
   if (argc == 1) { std::cerr << optparser << std::endl; return 1; }
 
   variables_map vm;
-  store(parse_command_line(argc, argv, optparser), vm);
 
-  if (vm.count("help")) {
+  try {
+    store(parse_command_line(argc, argv, optparser), vm);
+    if (vm.count("help")) {
+      std::cerr << optparser << std::endl;
+      return 0;
+    }
+    notify(vm);
+  } catch(const boost::program_options::error &e) {
     std::cerr << optparser << std::endl;
+    std::cerr << e.what() << std::endl;
     return 1;
   }
 
-  std::string model_name = "";
-  if (!vm.count("model")) {
-    ERROR_LOG("model prefix should be specified [--model].");
-    return 1;
-  } else {
-    model_name = vm["model"].as<std::string>();
-  }
-
-  PostaggerFrontend frontend(model_name);
+  PostaggerFrontend frontend(opt);
   frontend.dump();
   return 0;
 }

@@ -23,6 +23,10 @@ private:
   DumpOptions  dump_opt;
 
 public:
+  PostaggerFrontend(const TrainOptions& opt);
+  PostaggerFrontend(const TestOptions& opt);
+  PostaggerFrontend(const DumpOptions& opt);
+
   PostaggerFrontend(const std::string& reference_file,
       const std::string& holdout_file,
       const std::string& model_name,

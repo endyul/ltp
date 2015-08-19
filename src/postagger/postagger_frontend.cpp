@@ -22,6 +22,34 @@ using math::FeatureVector;
 using strutils::to_str;
 using utility::timer;
 
+PostaggerFrontend::PostaggerFrontend(const TrainOptions& opt)
+  : Frontend(kLearn), train_opt(opt) {
+  INFO_LOG("||| ltp postagger, training ...");
+  INFO_LOG("report: reference file = %s", train_opt.train_file.c_str());
+  INFO_LOG("report: holdout file = %s", train_opt.holdout_file.c_str());
+  INFO_LOG("report: algorithm = %s", train_opt.algorithm.c_str());
+  INFO_LOG("report: model name = %s", train_opt.model_name.c_str());
+  INFO_LOG("report: maximum iteration = %d", train_opt.max_iter);
+  INFO_LOG("report: rare threshold = %d", train_opt.rare_feature_threshold);
+}
+
+PostaggerFrontend::PostaggerFrontend(const TestOptions& opt)
+  : Frontend(kTest), test_opt(opt) {
+  INFO_LOG("||| ltp postagger, testing ...");
+  INFO_LOG("report: input file = %s", test_opt.test_file.c_str());
+  INFO_LOG("report: model file = %s", test_opt.model_file.c_str());
+  INFO_LOG("report: lexicon file = %s", test_opt.lexicon_file.c_str());
+  INFO_LOG("report: evaluate = %s", (test_opt.evaluate? "true": "false"));
+  INFO_LOG("report: sequence probability = %s", (test_opt.sequence_prob? "true": "false"));
+  INFO_LOG("report: marginal probability = %s", (test_opt.marginal_prob? "true":"false"));
+}
+
+PostaggerFrontend::PostaggerFrontend(const DumpOptions& opt)
+  : Frontend(kDump), dump_opt(opt) {
+  INFO_LOG("||| ltp postagger, dumpping ...");
+  INFO_LOG("report: model file = %s", dump_opt.model_file.c_str());
+}
+
 PostaggerFrontend::PostaggerFrontend(const std::string& reference_file,
     const std::string& holdout_file,
     const std::string& model_name,
