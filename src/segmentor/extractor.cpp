@@ -2,6 +2,7 @@
 #include "segmentor/settings.h"
 #include "utils/strutils.hpp"
 #include "utils/chartypes.hpp"
+#include <vector>
 
 namespace ltp {
 namespace segmentor {
@@ -45,6 +46,52 @@ Extractor::~Extractor() {
     delete templates[i];
   }
 }
+
+std::vector<std::vector<std::string>> Extractor::extract1o_new(const Instance &inst) {
+  std::vector<std::vector<std::string>> inst_features_mat;
+
+#define TYPE(x) (strutils::to_str(inst.chartypes[(x)]&0x07))
+  std::vector<std::vector<std::string>> data_mat;
+  for(auto idx = 0; idx < inst.size(); ++idx) {
+    std::vector<std::string> datas;
+    datas.push_back(inst.forms[idx]);
+    datas.push_back(TYPE(idx));
+    datas.push_back(strutils::to_str(inst.lexicon_match_state[idx] & 0x0f));
+    datas.push_back(strutils::to_str((inst.lexicon_match_state[idx]>>4) & 0x0f));
+    datas.push_back(strutils::to_str((inst.lexicon_match_state[idx]>>8) & 0x0f));
+    data_mat.push_back(datas);
+  }
+#undef TYPE
+
+  auto len = inst.size();
+  for(auto idx = 0; idx < inst.size(); ++idx) {
+    std::vector<std::string> features;
+    auto& c_2 = idx-2 < 0 ? BOS : data_mat[idx-2][0];
+    auto& c_1 = idx-1 < 0 ? BOS : data_mat[idx-1][0];
+    auto& c_0 = data_mat[idx][0];
+    auto& c__1 = idx+1 >= len ? EOS : data_mat[idx+1][0];
+    auto& c__2 = idx+2 >= len ? EOS : data_mat[idx+2][0];
+    features.push_back("1="+c_2);
+    features.push_back("2="+c_1);
+    features.push_back("3="+c_0);
+    features.push_back("4="+c__1);
+    features.push_back("5="+c__2);
+    features.push_back("6="+c_2+"-"+c_1);
+    features.push_back("7="+c_1+"-"+c_0);
+    features.push_back("8="+c_0+"-"+c__1);
+    features.push_back("9="+c__1+"-"+c__2);
+    features.push_back("14="+(idx-1<0?BOT:data_mat[idx-1][1]));
+    features.push_back("15="+data_mat[idx][1]);
+    features.push_back("16="+(idx+1>=len?EOT:data_mat[idx+1][1]));
+    features.push_back("17="+data_mat[idx][2]);
+    features.push_back("18="+data_mat[idx][3]);
+    features.push_back("19="+data_mat[idx][4]);
+    inst_features_mat.push_back(std::move(features));
+  }
+
+  return inst_features_mat;
+}
+
 
 int Extractor::extract1o(const Instance& inst, int idx,
     std::vector<StringVec>& cache) {

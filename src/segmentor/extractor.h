@@ -29,6 +29,7 @@ public:
    */
   static int extract1o(const Instance& inst, int idx,
       std::vector< utility::StringVec >& cache);
+  static std::vector<std::vector<std::string>> extract1o_new(const Instance& inst);
 protected:
   Extractor();
   ~Extractor();

@@ -48,11 +48,27 @@ void Segmentor::extract_features(const Instance& inst,
     ctx->uni_features = 0;
   }
 
+  auto inst_features_mat = Extractor::extract1o_new(inst);
+
+
   for (size_t pos = 0; pos < L; ++ pos) {
+    cache_again.clear();
+
+    auto& cache = inst_features_mat[pos];
+    for (size_t tid = 0; tid < cache.size(); ++ tid) {
+      if (create) { mdl->space.retrieve(tid, cache[tid], true); }
+
+      int idx = mdl->space.index(tid, cache[tid]);
+      if (idx >= 0) { cache_again.push_back(idx); }
+
+    }
+
+    /*
     for (size_t n = 0; n < N; ++ n) { cache[n].clear(); }
     cache_again.clear();
 
     Extractor::extract1o(inst, pos, cache);
+
     for (size_t tid = 0; tid < cache.size(); ++ tid) {
       for (size_t itx = 0; itx < cache[tid].size(); ++ itx) {
         if (create) { mdl->space.retrieve(tid, cache[tid][itx], true); }
@@ -61,6 +77,7 @@ void Segmentor::extract_features(const Instance& inst,
         if (idx >= 0) { cache_again.push_back(idx); }
       }
     }
+    */
 
     size_t num_feat = cache_again.size();
     if (num_feat > 0 && ctx) {
