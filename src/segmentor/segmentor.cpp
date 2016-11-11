@@ -36,10 +36,8 @@ void Segmentor::extract_features(const Instance& inst,
   size_t N = Extractor::num_templates();
   size_t T = mdl->num_labels();
 
-  std::vector< StringVec > cache;
-  std::vector< int > cache_again;
+  std::vector< int > feature_idxs;
 
-  cache.resize(N);
   size_t L = inst.size();
 
   if (ctx) {
@@ -50,55 +48,26 @@ void Segmentor::extract_features(const Instance& inst,
 
   auto inst_features_mat = Extractor::extract1o_new(inst);
 
-
   for (size_t pos = 0; pos < L; ++ pos) {
-    cache_again.clear();
+    feature_idxs.clear();
 
-    auto& cache = inst_features_mat[pos];
-    for (size_t tid = 0; tid < cache.size(); ++ tid) {
-      if (create) { mdl->space.retrieve(tid, cache[tid], true); }
+    auto& features = inst_features_mat[pos];
+    for (size_t tid = 0; tid < N; ++ tid) {
+      if (create) { mdl->space.retrieve(tid, features[tid], true); }
 
-      int idx = mdl->space.index(tid, cache[tid]);
-      if (idx >= 0) { cache_again.push_back(idx); }
-
+      int idx = mdl->space.index(tid, features[tid]);
+      if (idx >= 0) { feature_idxs.push_back(idx); }
     }
 
-    /*
-    for (size_t n = 0; n < N; ++ n) { cache[n].clear(); }
-    cache_again.clear();
-
-    Extractor::extract1o(inst, pos, cache);
-
-    for (size_t tid = 0; tid < cache.size(); ++ tid) {
-      for (size_t itx = 0; itx < cache[tid].size(); ++ itx) {
-        if (create) { mdl->space.retrieve(tid, cache[tid][itx], true); }
-
-        int idx = mdl->space.index(tid, cache[tid][itx]);
-        if (idx >= 0) { cache_again.push_back(idx); }
-      }
-    }
-    */
-
-    size_t num_feat = cache_again.size();
+    size_t num_feat = feature_idxs.size();
     if (num_feat > 0 && ctx) {
-      size_t t = 0;
       int * idx = new int[num_feat];
       for (size_t j = 0; j < num_feat; ++ j) {
-        idx[j] = cache_again[j];
+        idx[j] = feature_idxs[j];
       }
 
-      ctx->uni_features[pos][t] = new FeatureVector;
-      ctx->uni_features[pos][t]->n = num_feat;
-      ctx->uni_features[pos][t]->val = 0;
-      ctx->uni_features[pos][t]->loff = 0;
-      ctx->uni_features[pos][t]->idx = idx;
-
-      for (t = 1; t < T; ++ t) {
-        ctx->uni_features[pos][t] = new FeatureVector;
-        ctx->uni_features[pos][t]->n = num_feat;
-        ctx->uni_features[pos][t]->idx = idx;
-        ctx->uni_features[pos][t]->val = 0;
-        ctx->uni_features[pos][t]->loff = t;
+      for (size_t t = 0; t < T; ++ t) {
+        ctx->uni_features[pos][t] = new FeatureVector(num_feat, idx, 0, t);
       }
     }
   }
@@ -115,7 +84,7 @@ void Segmentor::build_lexicon_match_state(
   // perform the maximum forward match algorithm
   for (size_t i = 0; i < len; ++ i) {
     std::string word; word.reserve(32);
-    for (size_t j = i; j<i+5 && j < len; ++ j) {
+    for (size_t j = i; j < i + __max_word_len__ && j < len; ++ j) {
       word = word + inst->forms[j];
 
       bool found = false;

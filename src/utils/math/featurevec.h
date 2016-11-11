@@ -6,11 +6,12 @@ namespace math {
 
 struct FeatureVector {
 public:
-  FeatureVector () : n(0), idx(0), val(0), loff(0) {
-  }
+  FeatureVector () : n(0), idx(0), val(0), loff(0) {}
 
-  ~FeatureVector() {
-  }
+  FeatureVector (size_t _n, int* _idx, double* _val, size_t _loff): n(_n), idx(_idx), val(_val), loff(_loff)  {}
+
+
+  ~FeatureVector() {}
 
   void clear() {
     if (idx) {

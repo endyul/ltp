@@ -1,11 +1,10 @@
 #ifndef __LTP_SEGMENTOR_EXTRACTOR_H__
 #define __LTP_SEGMENTOR_EXTRACTOR_H__
 
-#include <iostream>
 #include <vector>
 #include "segmentor/instance.h"
-#include "utils/template.hpp"
-#include "utils/strvec.hpp"
+#include "utils/new_template.hpp"
+#include <functional>
 
 namespace ltp {
 namespace segmentor {
@@ -17,24 +16,26 @@ namespace segmentor {
 class Extractor {
 public:
   static Extractor& extractor();
-  static int num_templates();
+  static size_t num_templates();
 
   /**
-   * Extract first-order features and store the list of string features into
-   * a StringVec
+   * Extract first-order features and store the vector of features vector
    *
    *  @param[in]  inst    The pointer to the instance.
-   *  @param[in]  idx     The index of the current form.
-   *  @param[out] cache   The cached.
+   *  @param[out] vector of features vectors   Features of the instance.
    */
-  static int extract1o(const Instance& inst, int idx,
-      std::vector< utility::StringVec >& cache);
   static std::vector<std::vector<std::string>> extract1o_new(const Instance& inst);
 protected:
   Extractor();
   ~Extractor();
 private:
-  static std::vector< utility::Template* > templates;
+  static std::vector< utility::NewTemplate* > templates;
+
+  typedef std::unordered_map<std::string, std::function<std::string(const Instance&, int)>> ft_funcs_type;
+  static ft_funcs_type ft_funcs;
+
+  static utility::NewTemplate::Data data;
+
 };
 
 }     //  end for namespace segmentor

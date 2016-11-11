@@ -2,6 +2,7 @@
 #include "segmentor/preprocessor.h"
 #include "segmentor/settings.h"
 #include "utils/strutils.hpp"
+#include <boost/algorithm/string.hpp>
 
 namespace ltp {
 namespace segmentor {
@@ -66,8 +67,8 @@ void Preprocessor::URI(const std::string& sentence,
 
   // match url in the sentence
   while (boost::regex_search(start, end, what, uri_regex, boost::match_default)) {
-    int left = what[0].first - sentence.begin();
-    int right = what[0].second - sentence.begin();
+    size_t left = static_cast<size_t>(what[0].first - sentence.begin());
+    size_t right = static_cast<size_t>(what[0].second - sentence.begin());
 
     if (check_flags(flags, left, right, NONE)) {
       flags[left] = URI_BEG;
@@ -89,8 +90,8 @@ void Preprocessor::English(const std::string& sentence,
 
   // match english in the sentence
   while (boost::regex_search(start, end, what, eng_regex, boost::match_default)) {
-    int left = what[0].first - sentence.begin();
-    int right = what[0].second - sentence.begin();
+    size_t left = static_cast<size_t>(what[0].first - sentence.begin());
+    size_t right = static_cast<size_t>(what[0].second - sentence.begin());
     if (check_flags(flags, left, right, NONE)) {
       flags[left] = ENG_BEG;
       if (right-1 > left) {
@@ -142,10 +143,11 @@ int Preprocessor::preprocess(const std::string& sentence,
     std::vector<std::string>& raw_forms,
     std::vector<std::string>& forms,
     std::vector<int>& chartypes) const {
-  std::string sent = trim_copy(sentence);
+
+  auto sent = boost::trim_copy(sentence);
   // std::cerr << sent << std::endl;
 
-  size_t len = sent.size();
+  auto len = sent.size();
   if (0 == len) {
     return 0;
   }
@@ -157,26 +159,28 @@ int Preprocessor::preprocess(const std::string& sentence,
   special_token(sent, flags);
   English(sent, flags);
 
-  std::string form = "";
   int left_status = 0;
 
   for (size_t i = 0; i < len; ) {
-    int flag = 0;
+    auto flag = flags[i];
 
-    if((flag = flags[i]) == SPECIAL_TOKEN_BEG) {
+    if(flag == SPECIAL_TOKEN_BEG) {
       merge(sent, len, flags, SPECIAL_TOKEN_MID, SPECIAL_TOKEN_END,
           HAS_ENG_ON_RIGHT, HAS_ENG_ON_LEFT,
           __eng__, CHAR_ENG, i, left_status, raw_forms, forms, chartypes);
       ++ ret;
-    } else if((flag = flags[i]) == ENG_BEG) {
+    } else if(flag == ENG_BEG) {
       merge(sent, len, flags, ENG_MID, ENG_END, HAS_ENG_ON_RIGHT, HAS_ENG_ON_LEFT,
           __eng__, CHAR_ENG, i, left_status, raw_forms, forms, chartypes);
       ++ ret;
-    } else if ((flag = flags[i]) == URI_BEG) {
+    } else if (flag == URI_BEG) {
       merge(sent, len, flags, URI_MID, URI_END, HAS_URI_ON_RIGHT, HAS_URI_ON_LEFT,
           __uri__, CHAR_URI, i, left_status, raw_forms, forms, chartypes);
       ++ ret;
     } else {
+      /**
+       * calculate utf-8 width
+       */
       bool is_space = false;
       size_t width = 0;
       if ((sent[i]&0x80)==0) {
@@ -210,7 +214,7 @@ int Preprocessor::preprocess(const std::string& sentence,
     }
   }
 
-  return ret;
+  return static_cast<int>(ret);
 }
 
 } //  end for namespace segmentor

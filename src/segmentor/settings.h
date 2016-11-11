@@ -34,6 +34,9 @@ const std::string __word_end__      = "</ltp:word>";
 const int __num_pos_types__ = 4;
 static const char* __pos_types__[] = { "b", "i", "e", "s", };
 
+// max word length when performing the maximum forward match algorithm
+const size_t __max_word_len__  = 5;
+
 }   //  end for namespace segmentor
 }   //  end for namespace ltp
 
