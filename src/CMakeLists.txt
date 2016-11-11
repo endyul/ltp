@@ -20,6 +20,7 @@ add_subdirectory ("parser.n")
 add_subdirectory ("srl")
 add_subdirectory ("ltp")
 add_subdirectory ("console")
+add_subdirectory("tools")
 
 # mongoose server is not supported in windows
 if (UNIX)

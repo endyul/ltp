@@ -8,7 +8,9 @@ set (postagger_SRC
     extractor.h
     extractor.cpp
     postagger.h
-    postagger.cpp)
+    postagger.cpp
+    model.h
+    model.cpp)
 
 # -----------------------------------------------
 # STATIC LIBRARY

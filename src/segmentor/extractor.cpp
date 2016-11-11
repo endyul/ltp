@@ -78,5 +78,11 @@ int Extractor::extract1o(const Instance& inst, int idx,
   return 0;
 }
 
+
+int Extractor::extract1o(const Instance& inst, std::vector<std::vector<utility::StringVec>>& features) {
+  size_t len = inst.size();
+  return 0;
+}
+
 }     //  end for namespace segmentor
 }     //  end for namespace ltp

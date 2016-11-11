@@ -15,7 +15,6 @@ using framework::ViterbiScoreMatrix;
 using utility::StringVec;
 using math::FeatureVector;
 
-const std::string Postagger::model_header = "otpos";
 
 Postagger::Postagger(): model(0) {}
 Postagger::~Postagger() { if (model) { delete model; model = 0; } }

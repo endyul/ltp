@@ -1,3 +1,4 @@
+#include <framework/decoder.h>
 #include "ner/decoder.h"
 #include "utils/strutils.hpp"
 #include "utils/logging.hpp"
@@ -8,6 +9,7 @@ namespace ner {
 
 using strutils::split_by_sep;
 using strutils::trim_copy;
+using ltp::framework::ViterbiDecoder;
 
 NERTransitionConstrain::NERTransitionConstrain(const utility::IndexableSmartMap& alphabet,
     const std::vector<std::string>& includes): T(alphabet.size()) {
@@ -37,6 +39,25 @@ bool NERTransitionConstrain::can_tran(const size_t& i, const size_t& j) const {
 
   size_t code = i* T+ j;
   return rep.find(code) != rep.end();
+}
+
+bool NERTransitionConstrain::can_emit(const size_t& i, const size_t& j, bool last=false) const {
+  size_t tag = 0;
+  if (j == 0) {
+    tag = 0;
+  } else {
+    tag = (j-1) % __num_pos_types__ + 1;
+  }
+  constexpr size_t __o__ = 0;
+  constexpr size_t __b__ = 1;
+  constexpr size_t __i__ = 2;
+  constexpr size_t __e__ = 3;
+  constexpr size_t __s__ = 4;
+
+  if (i == 0 && !(tag == __o__ || tag == __b__ || tag == __s__)) return false;
+  if (last && !(tag == __o__ || tag == __e__ || tag == __s__)) return false;
+
+  return true;
 }
 
 size_t NERTransitionConstrain::size(void) const {
@@ -73,9 +94,9 @@ void NERViterbiDecoderWithMarginal::decode(const framework::ViterbiScoreMatrix& 
       calc_point_probabilities(output, point_probabilities);
 
       for (size_t i = 0; i < output.size(); ++i) {
-        if (output[i] == 0 ||
-                ((output[i]-1) % __num_pos_types__) == 0 ||
-                ((output[i]-1) % __num_pos_types__) == 3) {
+        if (output[i] == 0 || // O
+                ((output[i]-1) % __num_pos_types__) == 0 || //B
+                ((output[i]-1) % __num_pos_types__) == 3) { //S
           partial_idx.push_back(i);
         }
       }

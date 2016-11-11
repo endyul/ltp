@@ -3,6 +3,7 @@
 #include "boost/program_options.hpp"
 #include "utils/logging.hpp"
 #include "ner/ner_frontend.h"
+#include "ner/model.h"
 
 #define DESCRIPTION "Named Entity Recognization"
 #define EXECUTABLE "otner"

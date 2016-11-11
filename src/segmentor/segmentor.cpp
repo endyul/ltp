@@ -24,7 +24,6 @@ using math::FeatureVector;
 using math::SparseVec;
 using strutils::trim;
 
-const std::string Segmentor::model_header = "otcws";
 
 Segmentor::Segmentor(): model(0) {}
 Segmentor::~Segmentor() { if (model) { delete model; model = 0; } }

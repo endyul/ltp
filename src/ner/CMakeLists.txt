@@ -8,7 +8,13 @@ set (ner_SRC
     extractor.h
     extractor.cpp
     ner.h
-    ner.cpp)
+    ner.cpp
+    multi_ner.h
+    multi_ner.cpp
+    model.h
+    model.cpp
+    multi_model.h
+    multi_model.cpp)
 
 # -----------------------------------------------
 # STATIC LIBRARY

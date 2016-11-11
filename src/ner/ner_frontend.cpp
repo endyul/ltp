@@ -13,7 +13,6 @@ namespace ner {
 
 using framework::Frontend;
 using framework::Parameters;
-using framework::Model;
 using framework::kLearn;
 using framework::kTest;
 using framework::kDump;
@@ -182,7 +181,7 @@ void NamedEntityRecognizerFrontend::train(void) {
   }
   INFO_LOG("trace: %d sentences is loaded.", train_dat.size());
 
-  model = new Model(Extractor::num_templates());
+  model = new Model;
   // build tag dictionary, map string tag to index
   INFO_LOG("report: start building configuration ...");
   build_configuration();
@@ -252,7 +251,7 @@ void NamedEntityRecognizerFrontend::train(void) {
     INFO_LOG("trace: %d instances is trained.", train_dat.size());
     model->param.flush( train_dat.size()*(iter+1) );
 
-    Model* new_model = new Model(Extractor::num_templates());
+    ltp::ner::Model* new_model = new Model;
     erase_rare_features(model, new_model,
         train_opt.rare_feature_threshold, update_counts);
 
@@ -267,7 +266,7 @@ void NamedEntityRecognizerFrontend::train(void) {
       best_iteration = iter;
 
       std::ofstream ofs(train_opt.model_name.c_str(), std::ofstream::binary);
-      new_model->save(model_header, Parameters::kDumpAveraged, ofs);
+      new_model->save(ofs, Parameters::kDumpAveraged);
       INFO_LOG("trace: model for iteration #%d is saved to %s",
           iter+1, train_opt.model_name.c_str());
     }
@@ -339,8 +338,8 @@ void NamedEntityRecognizerFrontend::test(void) {
     return;
   }
 
-  model = new framework::Model(Extractor::num_templates());
-  if (!model->load(model_header, mfs)) {
+  model = new ltp::ner::Model;
+  if (!model->load(mfs)) {
     ERROR_LOG("Failed to load model");
     return;
   }
@@ -447,8 +446,8 @@ void NamedEntityRecognizerFrontend::dump(void) {
     return;
   }
 
-  model = new Model(Extractor::num_templates());
-  if (!model->load(model_header, mfs)) {
+  model = new Model;
+  if (!model->load(mfs)) {
     ERROR_LOG("Failed to load model");
     return;
   }

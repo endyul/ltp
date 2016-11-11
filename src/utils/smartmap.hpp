@@ -595,6 +595,7 @@ public:
   ~IndexableSmartMap() {
     if (entries) {
       delete [](entries);
+      entries = nullptr;
     }
   }
 

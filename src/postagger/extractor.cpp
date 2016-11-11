@@ -19,7 +19,7 @@ Extractor& Extractor::extractor() {
   return instance_;
 }
 
-int Extractor::num_templates() {
+size_t Extractor::num_templates() {
   extractor();
   return templates.size();
 }

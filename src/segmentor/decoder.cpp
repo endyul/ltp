@@ -16,8 +16,10 @@ bool SegmentationConstrain::can_tran(const size_t& i, const size_t& j) const {
         || ((i == __e_id__ || i == __s_id__) && (j == __b_id__ || j == __s_id__)));
 }
 
-bool SegmentationConstrain::can_emit(const size_t& i, const size_t& j) const {
+bool SegmentationConstrain::can_emit(const size_t& i, const size_t& j, bool last=false) const {
   if (i == 0 && !(j == __b_id__ || j == __s_id__)) { return false; }
+
+  if (last && !(j == __e_id__ || j == __s_id__)) {return false; }
 
   if (chartypes) {
     int flag = (chartypes->at(i)&0x07);

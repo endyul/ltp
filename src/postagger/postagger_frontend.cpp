@@ -6,13 +6,13 @@
 #include "utils/time.hpp"
 #include "utils/logging.hpp"
 #include "utils/strutils.hpp"
+#include "utils/model_helper.hpp"
 
 namespace ltp {
 namespace postagger {
 
 using framework::Frontend;
 using framework::Parameters;
-using framework::Model;
 using framework::kLearn;
 using framework::kTest;
 using framework::kDump;
@@ -137,7 +137,7 @@ void PostaggerFrontend::train(void) {
   }
   INFO_LOG("trace: %d sentences is loaded.", train_dat.size());
 
-  model = new Model(Extractor::num_templates());
+  model = new Model;
   // build tag dictionary, map string tag to index
   INFO_LOG("report: start building configuration ...");
   build_configuration();
@@ -201,7 +201,7 @@ void PostaggerFrontend::train(void) {
     INFO_LOG("trace: %d instances is trained.", train_dat.size());
     model->param.flush( train_dat.size() * (iter + 1) );
 
-    Model* new_model = new Model(Extractor::num_templates());
+    Model* new_model = new Model;
     erase_rare_features(model, new_model, train_opt.rare_feature_threshold,
         update_counts);
 
@@ -215,7 +215,7 @@ void PostaggerFrontend::train(void) {
       best_iteration = iter;
 
       std::ofstream ofs(train_opt.model_name.c_str(), std::ofstream::binary);
-      new_model->save(model_header, Parameters::kDumpAveraged, ofs);
+      new_model->save(ofs,  Parameters::kDumpAveraged);
 
       INFO_LOG("trace: model for iteration #%d is saved to %s",
           iter+1, train_opt.model_name.c_str());
@@ -280,9 +280,11 @@ void PostaggerFrontend::test(void) {
     return;
   }
 
-  model = new Model(Extractor::num_templates());
-  if (!model->load(model_header, mfs)) {
+
+  model = new Model;
+  if (!model->load(mfs)) {
     ERROR_LOG("Failed to load model");
+    delete model;
     return;
   }
 
@@ -370,6 +372,7 @@ void PostaggerFrontend::test(void) {
   INFO_LOG("Elapsed time %lf", t.elapsed());
 
   //sleep(1000000);
+  delete model;
   return;
 }
 
@@ -383,8 +386,8 @@ void PostaggerFrontend::dump(void) {
     return;
   }
 
-  model = new Model(Extractor::num_templates());
-  if (!model->load(model_header, mfs)) {
+  model = new ltp::postagger::Model;
+  if (!model->load(mfs)) {
     ERROR_LOG("Failed to load model");
     return;
   }

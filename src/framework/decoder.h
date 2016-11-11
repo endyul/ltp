@@ -12,7 +12,7 @@ namespace framework {
 
 class ViterbiDecodeConstrain {
 public:
-  virtual bool can_emit(const size_t& i, const size_t& j) const {
+  virtual bool can_emit(const size_t& i, const size_t& j, bool last=false) const {
     return true;
   }
 
@@ -176,6 +176,7 @@ public:
 
     for (size_t t = 0; t < T; ++t) {
       if (!con.can_emit(0, t)) continue;
+      if (L == 1 && !con.can_emit(0, t, true)) continue;
       state[0][t] = scm.emit(0, t);
     }
 
@@ -183,6 +184,7 @@ public:
     for (size_t i = 1; i < L; ++ i) {
       for (size_t t = 0; t < T; ++ t) {
         if (!con.can_emit(i, t)) continue;
+        if (i == L-1 && !con.can_emit(i, t, true)) continue;
         best = -DBL_MAX;
         for (size_t pt = 0; pt < T; ++ pt) {
           if (!con.can_emit(i-1, pt) || !con.can_tran(pt, t)) continue;
@@ -394,6 +396,7 @@ protected:
 
     for (size_t j = 0 ; j < T; ++j) {
       if (!con.can_emit(0, j)) { continue; }
+      if (L == 1 && !con.can_emit(0, j, true)) continue;
       alpha_score[0][j] = exp_emit[0][j];
     }
     double sum = row_sum(alpha_score, 0, con);
@@ -403,6 +406,7 @@ protected:
     for (size_t i = 1; i < L; ++i) {
       for (size_t t = 0; t < T; ++t) {
         if (!con.can_emit(i, t)) { continue; }
+        if (i == L-1 && !con.can_emit(i, t, true)) continue;
         for (size_t pt = 0; pt < T; ++pt) {
           if (!con.can_emit(i-1, pt) || !con.can_tran(pt, t)) { continue; }
           alpha_score[i][t] += alpha_score[i-1][pt] * exp_tran[pt][t];
@@ -422,9 +426,8 @@ protected:
     beta_score.resize(L, T);
     beta_score = 0.;
 
-
     for (size_t j = 0; j < T; ++j) {
-      if (!con.can_emit(L-1, j)) { continue; }
+      if (!con.can_emit(L-1, j, true)) { continue; }
       beta_score[L-1][j] = scale[L-1];
     }
 
@@ -432,12 +435,14 @@ protected:
     for (int i = L - 2; i >= 0; --i) {
       for (size_t nt = 0; nt < T; ++nt) {
         if (!con.can_emit(i+1, nt)) { continue; }
+        if (i+1 == L-1 && !con.can_emit(i+1, nt, true)) { continue; }
         tmp_row[nt] = beta_score[i+1][nt] * exp_emit[i+1][nt];
       }
       for (size_t t = 0; t < T; ++t) {
         if (!con.can_emit(i, t)) { continue; }
         for (size_t nt = 0; nt < T; ++nt) {
           if (!con.can_emit(i+1, nt) || !con.can_tran(t, nt)) { continue; }
+          if (i+1 == L-1 && !con.can_emit(i+1, nt, true)) { continue; }
           beta_score[i][t] += tmp_row[nt] * exp_tran[t][nt];
         }
       }
@@ -466,6 +471,7 @@ protected:
     double sum = 0.;
     for (size_t j = 0; j < mat.ncols(); ++j) {
       if (!con.can_emit(i, j)) { continue; }
+      if (j == mat.ncols()-1 && !con.can_emit(i, j, true)) {continue;}
       sum += mat[i][j];
     }
     return sum;
@@ -477,6 +483,7 @@ protected:
           const ViterbiDecodeConstrain& con) {
     for (size_t j = 0 ; j < mat.ncols(); ++j) {
       if (!con.can_emit(i, j)) { continue; }
+      if (j == mat.ncols()-1 && !con.can_emit(i, j, true)) {continue;}
       mat[i][j] *= scale;
     }
   }

@@ -239,7 +239,7 @@ public:
    *  @param[out] out   The output stream.
    *  @param[in]  opt   The dump option.
    */
-  void dump(std::ostream & out, const DumpOption& opt) const {
+  void dump(std::ostream & out, const DumpOption& opt = kDumpAveraged) const {
     char chunk[16];
     if (opt == kDumpDetails) {
       strncpy(chunk, "param-details", 16);

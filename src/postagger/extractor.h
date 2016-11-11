@@ -14,7 +14,7 @@ namespace postagger {
 class Extractor {
 public:
   static Extractor& extractor();
-  static int num_templates();
+  static size_t num_templates();
   static int extract1o(const Instance& inst, int idx,
       std::vector<utility::StringVec>& cache);
 protected:

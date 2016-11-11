@@ -4,7 +4,6 @@
 #include "ner/extractor.h"
 #include "ner/options.h"
 #include "ner/settings.h"
-
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -17,11 +16,33 @@ using framework::ViterbiScoreMatrix;
 using utility::StringVec;
 using math::FeatureVector;
 
-const std::string NamedEntityRecognizer::model_header = "otner";
 const std::string NamedEntityRecognizer::delimiter = "-";
 
 NamedEntityRecognizer::NamedEntityRecognizer(): model(0), glob_con(0) {}
-NamedEntityRecognizer::~NamedEntityRecognizer() { if (model) { delete model; model = 0; } }
+NamedEntityRecognizer::~NamedEntityRecognizer() {
+  //if (model) { delete model; model = 0; }
+  if (glob_con) {delete glob_con; glob_con = 0;}
+}
+
+NamedEntityRecognizer::NamedEntityRecognizer(ltp::ner::Model* _model) {
+  model = _model;
+  glob_con = 0;
+  std::unordered_set<std::string> ne_types;
+  for(size_t i = 0; i < model->num_labels(); ++i) {
+    std::string tag = model->labels.at(i);
+    if (tag == ltp::ner::OTHER) {continue;}
+    ne_types.insert(tag.substr(1+delimiter.size()));
+  }
+  build_glob_tran_cons(ne_types);
+}
+
+NERTransitionConstrain* NamedEntityRecognizer::get_glob_con() const {
+  return glob_con;
+}
+
+ltp::ner::Model* NamedEntityRecognizer::get_model() const {
+  return model;
+}
 
 void NamedEntityRecognizer::build_glob_tran_cons(
     const std::unordered_set<std::string>& ne_types) {
@@ -98,13 +119,7 @@ void NamedEntityRecognizer::extract_features(const Instance& inst,
         idx[j] = cache_again[j];
       }
 
-      ctx->uni_features[pos][t] = new FeatureVector;
-      ctx->uni_features[pos][t]->n = num_feat;
-      ctx->uni_features[pos][t]->val = 0;
-      ctx->uni_features[pos][t]->loff = 0;
-      ctx->uni_features[pos][t]->idx = idx;
-
-      for (t = 1; t < T; ++ t) {
+      for (t = 0; t < T; ++ t) {
         ctx->uni_features[pos][t] = new FeatureVector;
         ctx->uni_features[pos][t]->n = num_feat;
         ctx->uni_features[pos][t]->val = 0;

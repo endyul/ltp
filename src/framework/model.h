@@ -4,63 +4,88 @@
 #include "framework/serializable.h"
 #include "framework/parameter.h"
 #include "framework/featurespace.h"
+#include "framework/base_model.h"
 #include "utils/smartmap.hpp"
+#include "config.h"
 
 namespace ltp {
 namespace framework {
 
-class Model: public Serializable {
+class Model: public BaseModel {
 public:
   Model(const size_t& nr_feature_types): space(nr_feature_types) {}
+  Model(const char* _header,
+        const size_t& nr_feature_types): space(nr_feature_types) {
+    strcpy(header, _header);
+  }
+
+  /*
+   * non-para constructor
+   * begin at v3.4.0
+   * we should call `load` function then immediately to construct `space`
+   * we just set nr_feature_types = 0
+   * space with nr_feature_types is dynamically malloc in `space.load` function
+   *
+   */
+  Model(): space(0) {}
+
+
   ~Model() {}
+
 
   /**
    * get number of labels;
    *
    *  @return   int   the number of labels
    */
-  size_t num_labels(void) const { return labels.size(); }
+  uint32_t num_labels(void) const { return labels.size(); }
 
-  void save(const std::string& model_name, const Parameters::DumpOption& opt,
-      std::ostream & ofs) const {
-    save(model_name.c_str(), opt, ofs);
-  }
 
   /**
    * save the model to a output stream
    *
-   *  @param[in]  model_name  The name for the model.
-   *  @param[in]  opt         The Parameters::DumpOption opt
    *  @param[out] ofs         The output stream.
+   *  @param[in]  opt         The Parameters::DumpOption opt
    */
-  void save(const char* model_name, const Parameters::DumpOption& opt,
-      std::ostream & ofs) const {
-    // write a signature into the file
-    char chunk[128];
-    strncpy(chunk, model_name, 128);
+  void save(std::ostream & ofs,
+            const Parameters::DumpOption& opt = Parameters::DumpOption::kDumpAveraged) const {
 
-    ofs.write(chunk, 128);
+    ofs.write(header, HEADER_CHUNK_SIZE);
+    ofs.write(version, VERSION_CHUNK_SIZE);
+    ofs.write(reinterpret_cast<const char *>(&type), TYPE_CHUNK_SIZE);
+    ofs.write(reserved_field, RESERVED_CHUNK_SIZE);
+
     labels.dump(ofs);
     space.dump(ofs);
     param.dump(ofs, opt);
   }
 
-  bool load(const std::string& model_name, std::istream& ifs) {
-    return load(model_name.c_str(), ifs);
+  void save(std::ostream & ofs,
+            const std::string & _header ,
+            const Parameters::DumpOption& opt = Parameters::DumpOption::kDumpAveraged) {
+    save(ofs, _header.c_str(), opt);
   }
+
+  void save(std::ostream & ofs,
+            const char * _header ,
+            const Parameters::DumpOption& opt = Parameters::DumpOption::kDumpAveraged) {
+    strcpy(header, _header);
+    save(ofs, opt);
+  }
+
 
   /**
    * load the model from an input stream
    *
    *  @param[in]  ifs   the input stream
    */
-  bool load(const char* model_name, std::istream& ifs) {
-    char chunk[128];
-    ifs.read(chunk, 128);
+  bool load(std::istream& ifs) {
 
-    if (strcmp(chunk, model_name)) {
-      return false;
-    }
+    ifs.read(header, HEADER_CHUNK_SIZE);
+    ifs.read(version, VERSION_CHUNK_SIZE);
+    ifs.read(reinterpret_cast<char *>(&type), TYPE_CHUNK_SIZE);
+    ifs.read(reserved_field, RESERVED_CHUNK_SIZE);
+
     if (!labels.load(ifs)) {
       return false;
     }
@@ -74,6 +99,7 @@ public:
 
     return true;
   }
+
 public:
   utility::IndexableSmartMap labels;  //! The labels.
   ViterbiFeatureSpace space;          //! The feature space.

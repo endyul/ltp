@@ -1,17 +1,16 @@
 #ifndef __LTP_POSTAGGER_POSTAGGER_H__
 #define __LTP_POSTAGGER_POSTAGGER_H__
 
-#include "framework/model.h"
 #include "framework/decoder.h"
 #include "postagger/instance.h"
+#include "postagger/model.h"
 
 namespace ltp {
 namespace postagger {
 
 class Postagger {
 protected:
-  framework::Model* model;
-  static const std::string model_header;
+  ltp::postagger::Model* model;
 public:
   Postagger();
   ~Postagger();

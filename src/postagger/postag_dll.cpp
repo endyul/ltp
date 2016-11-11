@@ -9,6 +9,8 @@
 #include "utils/tinybitset.hpp"
 #include <iostream>
 #include <fstream>
+#include "utils/model_helper.hpp"
+#include "postagger/model.h"
 
 class __ltp_dll_postagger_wrapper : public ltp::postagger::Postagger {
 private:
@@ -25,9 +27,10 @@ public:
       return false;
     }
 
-    model = new ltp::framework::Model(ltp::postagger::Extractor::num_templates());
-    if (!model->load(ltp::postagger::Postagger::model_header, mfs)) {
+    model = new ltp::postagger::Model;
+    if (!model->load(mfs)) {
       delete model;
+      model = nullptr;
       return false;
     }
 

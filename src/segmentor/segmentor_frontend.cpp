@@ -399,9 +399,7 @@ void SegmentorFrontend::train(void) {
       best_iteration = iter;
 
       std::ofstream ofs(train_opt.model_name.c_str(), std::ofstream::binary);
-      new_model->save(model_header.c_str(),
-          (train_opt.dump_model_details? Parameters::kDumpDetails: Parameters::kDumpAveraged),
-          ofs);
+      new_model->save(ofs, train_opt.dump_model_details? Parameters::kDumpDetails: Parameters::kDumpAveraged);
 
       INFO_LOG("Model for iteration #%d is saved to [%s]", iter+1, train_opt.model_name.c_str());
     }
@@ -477,7 +475,7 @@ void SegmentorFrontend::test(void) {
   }
 
   model = new Model;
-  if (!model->load(model_header.c_str(), mfs)) {
+  if (!model->load(mfs)) {
     ERROR_LOG("Failed to load model");
     return;
   }
@@ -579,7 +577,7 @@ void SegmentorFrontend::dump(void) {
   }
 
   model = new Model;
-  if (!model->load(model_header.c_str(), mfs)) {
+  if (!model->load(mfs)) {
     ERROR_LOG("Failed to load model");
     return;
   }

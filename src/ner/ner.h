@@ -2,25 +2,27 @@
 #define __LTP_NER_NER_H__
 
 #include "framework/decoder.h"
-#include "framework/model.h"
 #include "ner/instance.h"
 #include "ner/decoder.h"
+#include "ner/model.h"
 #include "utils/unordered_set.hpp"
+
 
 namespace ltp {
 namespace ner {
 
 class NamedEntityRecognizer {
 protected:
-  framework::Model* model;  //! The pointer to the model.
+  ltp::ner::Model* model;  //! The pointer to the model.
   NERTransitionConstrain* glob_con;
-  static const std::string model_header;
   static const std::string delimiter;  //! The delimiter between position tag and ne type
 public:
   NamedEntityRecognizer();
+  NamedEntityRecognizer(ltp::ner::Model* _model);
   ~NamedEntityRecognizer();
+  NERTransitionConstrain* get_glob_con() const;
+  ltp::ner::Model* get_model() const;
 
-protected:
   /**
    * extract feature from the instance, store the extracted features in a
    * framework::ViterbiFeatureContext class.

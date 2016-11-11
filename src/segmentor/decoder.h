@@ -19,7 +19,7 @@ public:
 
   bool can_tran(const size_t& i, const size_t& j) const;
 
-  bool can_emit(const size_t& i, const size_t& j) const;
+  bool can_emit(const size_t& i, const size_t& j, bool last) const;
 };
 
 class PartialSegmentationConstrain: public SegmentationConstrain {

@@ -78,11 +78,18 @@ class ViterbiFeatureSpace {
 public:
   ViterbiFeatureSpace(uint32_t nr_dicts, uint32_t nr_labels = 1)
     : _num_dicts(nr_dicts), _num_labels(nr_labels), _offset(0) {
+    if (nr_dicts == 0) {
+      dicts = nullptr;
+      return;
+    }
     dicts = new utility::SmartMap<int32_t>[ nr_dicts ];
   }
 
   ~ViterbiFeatureSpace(void) {
-    delete [](dicts);
+    if (dicts) {
+      delete [](dicts);
+      dicts = nullptr;
+    }
   }
 
   int32_t retrieve(const uint32_t& tid, const char* key) const {
@@ -213,7 +220,12 @@ public:
     ifs.read(reinterpret_cast<char *>(&sz), sizeof(uint32_t));
 
     if (sz != _num_dicts) {
-      return false;
+      //return false;
+      if (dicts) {
+        delete[] dicts;
+      }
+      dicts = new utility::SmartMap<int32_t>[sz];
+      _num_dicts = sz;
     }
 
     for (uint32_t i = 0; i < sz; ++ i) {
@@ -226,7 +238,7 @@ public:
 
   FeatureSpaceIterator begin() const {
     return FeatureSpaceIterator(dicts, _num_dicts);
-  }
+ }
 
   FeatureSpaceIterator end() const {
     return FeatureSpaceIterator(dicts + _num_dicts, _num_dicts);

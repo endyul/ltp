@@ -16,7 +16,6 @@ protected:
   Model* model;
   Preprocessor preprocessor;
   SegmentationConstrain con;
-  static const std::string model_header;
 public:
   Segmentor();
   ~Segmentor();

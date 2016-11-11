@@ -11,6 +11,8 @@ class Model: public framework::Model {
 public:
   typedef utility::SmartMap<bool> lexicon_t;
 
+  const static std::string model_header;
+
   //! The internal lexicon use to extract lexicon features.
   lexicon_t internal_lexicon;
 
@@ -26,15 +28,15 @@ public:
    *
    *  @param[out] ofs   the output stream
    */
-  void save(const char* model_name, const framework::Parameters::DumpOption& opt,
-      std::ostream & ofs);
+  void save(std::ostream & ofs,
+            const framework::Parameters::DumpOption& opt);
 
   /**
    * load the model from an input stream
    *
    *  @param[in]  ifs   the input stream
    */
-  bool load(const char* model_name, std::istream& ifs);
+  bool load(std::istream& ifs);
 };
 
 }     //  end for namespace segmentor

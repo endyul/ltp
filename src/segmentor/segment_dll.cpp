@@ -3,7 +3,7 @@
 #include "segmentor/settings.h"
 #include "utils/logging.hpp"
 #include "utils/codecs.hpp"
-
+#include "utils/model_helper.hpp"
 #include <iostream>
 #include <fstream>
 
@@ -22,11 +22,12 @@ public:
     }
 
     model = new ltp::segmentor::Model;
-    if (!model->load(model_header.c_str(), mfs)) {
+    if (!model->load(mfs)) {
       delete model;
       model = 0;
       return false;
     }
+
 
     if (NULL != lexicon_file) {
       load_lexicon(lexicon_file, &model->external_lexicon);
@@ -86,7 +87,7 @@ public:
     if (!mfs) { return false; }
 
     model = new ltp::segmentor::Model;
-    if (!model->load(model_header.c_str(), mfs)) {
+    if (!model->load(mfs)) {
       delete model;
       model = 0;
       return false;
@@ -97,7 +98,7 @@ public:
     if (!mfs) { return false; }
 
     bs_model = new ltp::segmentor::Model;
-    if (!bs_model->load(model_header.c_str(), mfs)) {
+    if (!bs_model->load(mfs)) {
       delete model;     model = 0;
       delete bs_model;  bs_model = 0;
       return false;

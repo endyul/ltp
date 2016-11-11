@@ -55,7 +55,7 @@ bool CustomizedSegmentorFrontend::load_baseline_model() {
   }
 
   bs_model = new Model;
-  if (!bs_model->load(Segmentor::model_header.c_str(), mfs)) {
+  if (!bs_model->load(mfs)) {
     ERROR_LOG("Failed to load baseline model");
     return false;
   }
